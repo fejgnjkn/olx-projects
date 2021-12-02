@@ -90,7 +90,7 @@ public class AdvertiseServiceImp implements AdvertiseService {
 
 	@Override
 	public List<Advertise> searchAdvertisementByFilter(String searchText) {
-		List<Advertise> list= new ArrayList<>();
+		List<Advertise> list = new ArrayList<>();
 		List<AdvertiseEntity> entities = this.advertiseRepo.findAdvertiseByFilter(searchText);
 		for (AdvertiseEntity entity : entities) {
 			list.add(generateAdvertiseDtoFromEntity(entity));
@@ -166,14 +166,46 @@ public class AdvertiseServiceImp implements AdvertiseService {
 		Root<AdvertiseEntity> rotEntity = criteriaQuery.from(AdvertiseEntity.class);
 
 		Predicate titlePredicate = null;
-
 		if (!TextUtils.isEmpty(searchText)) {
-			titlePredicate = criteriaBuilder.equal(rotEntity.get("title"), searchText);
+			titlePredicate = criteriaBuilder.like(rotEntity.get("title"), searchText);
 		}
-//		Predicate postByPredicate = criteriaBuilder.equal(rotEntity.get("postBy"), postedBy);
-//		Predicate categoryPredicate = criteriaBuilder.equal(rotEntity.get("category"), category);
+		Predicate postByPredicate = null;
+		if (!TextUtils.isEmpty(postedBy)) {
+			postByPredicate = criteriaBuilder.equal(rotEntity.get("postedBy"), postedBy);
+		}
 
-		Predicate finalPredicate = criteriaBuilder.or(titlePredicate);
+		Predicate categoryPredicate = null;
+		if (!TextUtils.isEmpty(category)) {
+			categoryPredicate = criteriaBuilder.equal(rotEntity.get("category"), category);
+		}
+
+		Predicate fromDatePredicate = null;
+		if (fromDate != null) {
+			fromDatePredicate = criteriaBuilder.greaterThanOrEqualTo(rotEntity.get("createdDate"), fromDate);
+		}
+
+		Predicate startIndexPredicate = null;
+		if (startIndex != null) {
+			startIndexPredicate = criteriaBuilder.greaterThanOrEqualTo(rotEntity.get("id"), startIndex);
+		}
+
+		List<Predicate> predicates = new ArrayList<>();
+		if (titlePredicate != null) {
+			predicates.add(titlePredicate);
+		}
+		if (categoryPredicate != null) {
+			predicates.add(categoryPredicate);
+		}
+
+		if (postByPredicate != null) {
+			predicates.add(postByPredicate);
+		}
+
+		if (startIndexPredicate != null) {
+			predicates.add(startIndexPredicate);
+		}
+
+		Predicate finalPredicate = criteriaBuilder.or(predicates.toArray(new Predicate[0]));
 		criteriaQuery.where(finalPredicate);
 		List<AdvertiseEntity> entities = entityManager.createQuery(criteriaQuery).getResultList();
 

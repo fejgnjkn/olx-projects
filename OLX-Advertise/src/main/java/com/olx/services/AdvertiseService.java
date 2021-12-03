@@ -19,7 +19,7 @@ public interface AdvertiseService {
 			 String category,
 			 String postedBy,
 			LocalDate onDate,
-			LocalDate fromDate, Integer startIndex, Integer records);
+			LocalDate fromDate, LocalDate toDate, String sortBy, Integer startIndex, Integer records);
 	
 	public List<Advertise> searchAdvertisementByFilter( String searchText);
 	public boolean deleteAdvertise(int id, String token);

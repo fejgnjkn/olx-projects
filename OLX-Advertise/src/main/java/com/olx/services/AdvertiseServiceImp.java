@@ -13,6 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.xml.bind.ValidationException;
@@ -155,9 +156,14 @@ public class AdvertiseServiceImp implements AdvertiseService {
 	}
 
 	@Override
-	public List<Advertise> searchAdvertisementByFilters(String searchText, String dateCondition, String category,
-			String postedBy, LocalDate onDate, LocalDate fromDate, Integer startIndex, Integer records) {
+	public List getAllCategories() {
+		return masterDataDelegate.getAllCategories();
+	}
 
+	@Override
+	public List<Advertise> searchAdvertisementByFilters(String searchText, String dateCondition, String category,
+			String postedBy, LocalDate onDate, LocalDate fromDate, LocalDate toDate, String sortBy, Integer startIndex,
+			Integer records) {
 		List<Advertise> advertiseList = new ArrayList<>();
 
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -179,14 +185,37 @@ public class AdvertiseServiceImp implements AdvertiseService {
 			categoryPredicate = criteriaBuilder.equal(rotEntity.get("category"), category);
 		}
 
+		Predicate onDatePredicate = null;
+		if (onDate != null) {
+			onDatePredicate = criteriaBuilder.greaterThanOrEqualTo(rotEntity.get("createdDate"), onDate);
+		}
+
 		Predicate fromDatePredicate = null;
+		Predicate lessThanPredicate = null;
+		Predicate geaterThanPredicate = null;
 		if (fromDate != null) {
-			fromDatePredicate = criteriaBuilder.greaterThanOrEqualTo(rotEntity.get("createdDate"), fromDate);
+			fromDatePredicate = criteriaBuilder.equal(rotEntity.get("createdDate"), fromDate);
+			lessThanPredicate = criteriaBuilder.lessThan(rotEntity.get("createdDate"), fromDate);
+			geaterThanPredicate = criteriaBuilder.greaterThan(rotEntity.get("createdDate"), fromDate);
+		}
+
+		Predicate toDatePredicate = null;
+		if (toDate != null) {
+			toDatePredicate = criteriaBuilder.greaterThanOrEqualTo(rotEntity.get("createdDate"), toDate);
 		}
 
 		Predicate startIndexPredicate = null;
 		if (startIndex != null) {
 			startIndexPredicate = criteriaBuilder.greaterThanOrEqualTo(rotEntity.get("id"), startIndex);
+		}
+
+		if (sortBy != null) {
+
+			Order sortedOrder = criteriaBuilder.desc(rotEntity.get("createdDate"));
+			if (sortBy.equalsIgnoreCase("ASC")) {
+				sortedOrder = criteriaBuilder.asc(rotEntity.get("createdDate"));
+			}
+			criteriaQuery.orderBy(sortedOrder);
 		}
 
 		List<Predicate> predicates = new ArrayList<>();
@@ -205,6 +234,28 @@ public class AdvertiseServiceImp implements AdvertiseService {
 			predicates.add(startIndexPredicate);
 		}
 
+		if (dateCondition != null) {
+
+			switch (dateCondition) {
+
+			case "between":
+				predicates.add(fromDatePredicate);
+				predicates.add(toDatePredicate);
+				break;
+			case "lessthan":
+				predicates.add(lessThanPredicate);
+				break;
+			case "greatethan":
+				predicates.add(geaterThanPredicate);
+				break;
+			case "equals":
+				predicates.add(onDatePredicate);
+				break;
+			default:
+				break;
+			}
+		}
+
 		Predicate finalPredicate = criteriaBuilder.or(predicates.toArray(new Predicate[0]));
 		criteriaQuery.where(finalPredicate);
 		List<AdvertiseEntity> entities = entityManager.createQuery(criteriaQuery).getResultList();
@@ -215,10 +266,4 @@ public class AdvertiseServiceImp implements AdvertiseService {
 
 		return advertiseList;
 	}
-
-	@Override
-	public List getAllCategories() {
-		return masterDataDelegate.getAllCategories();
-	}
-
 }

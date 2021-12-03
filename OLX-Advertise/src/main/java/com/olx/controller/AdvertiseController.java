@@ -56,11 +56,14 @@ public class AdvertiseController {
 			@RequestParam(name = "postedBy", required = false) String postedBy,
 			@RequestParam(name = "onDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate onDate,
 			@RequestParam(name = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate fromDate,
+			@RequestParam(name = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate toDate,
+			@RequestParam(name = "sortBy", required = false) String sortBy,
 			@RequestParam(name = "startIndex", required = false) Integer startIndex,
 			@RequestParam(name = "records", required = false) Integer records){
 	
-		return advertiseService.searchAdvertisementByFilters(searchText, dateCondition, category, postedBy, onDate, fromDate, startIndex, records);
+		return advertiseService.searchAdvertisementByFilters(searchText, dateCondition, category, postedBy, onDate, fromDate,toDate,sortBy,  startIndex, records);
 	}
+	
 	
 	
 	@GetMapping(value="/",produces= {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
